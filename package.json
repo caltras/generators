@@ -1,0 +1,22 @@
+{
+  "name": "generators",
+  "version": "1.0.0",
+  "description": "Project Generators",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caltras/generators.git"
+  },
+  "keywords": [
+    "Yeoman"
+  ],
+  "author": "Claudio Traspadini Oliveira",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/caltras/generators/issues"
+  },
+  "homepage": "https://github.com/caltras/generators#readme"
+}

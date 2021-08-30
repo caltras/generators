@@ -1,0 +1,116 @@
+plugins {
+	id 'org.springframework.boot' version '2.5.3'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+	id 'jacoco'
+    <% if (sonarqube.enabled) { %>
+	id 'org.sonarqube' version '3.3'
+    <% } %>
+    id "com.github.davidmc24.gradle.plugin.avro" version "1.2.0"
+}
+
+group = '<%= application.group %>'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	/* Confluent package repo */
+	maven {
+		url "https://packages.confluent.io/maven"
+	}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	/*Kafka library*/
+    implementation 'org.springframework.kafka:spring-kafka'
+    compileOnly "org.apache.avro:avro:1.10.1"
+	implementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '6.0.0'
+	implementation 'org.springframework.kafka:spring-kafka'
+	implementation 'io.confluent:kafka-avro-serializer:6.0.0'
+
+	/*Test Libraries*/
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testCompileOnly 'org.projectlombok:lombok:1.18.12'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+	implementation platform('org.testcontainers:testcontainers-bom:1.16.0')
+	testImplementation "org.testcontainers:testcontainers:1.16.0"
+	testImplementation 'org.awaitility:awaitility:4.1.0'
+
+	testImplementation group: 'io.github.hakky54', name: 'logcaptor', version: '2.3.0'
+
+}
+
+test {
+	useJUnitPlatform()
+	jvmArgs '--enable-preview'
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.enabled true
+	}
+}
+
+task jacocoFuncTestReport(type: JacocoReport) {
+	reports {
+		xml.enabled true
+	}
+}
+// task functionalTest(type: Test) {
+// 	useJUnitPlatform()
+// 	include '**/functionaltest/**'
+// 	jvmArgs '--enable-preview'
+// 	finalizedBy jacocoFuncTestReport
+// }
+
+task jacocoUnitTestReport(type: JacocoReport) {
+	reports {
+		xml.enabled true
+	}
+}
+// task unitTest(type: Test) {
+// 	useJUnitPlatform()
+// 	include '**/unittest/**'
+// 	jvmArgs '--enable-preview'
+// 	finalizedBy jacocoUnitTestReport
+// }
+
+<% if (sonarqube.enabled) { %>
+def gitBranch() {
+	def branch = ""
+	def proc = "git rev-parse --abbrev-ref HEAD".execute()
+	proc.in.eachLine { line -> branch = line }
+	proc.err.eachLine { line -> println line }
+	proc.waitFor()
+	branch
+}
+
+sonarqube {
+	properties {
+		property 'sonar.host.url', '<%= sonarqube.host.url %>'
+		property 'sonar.login', '<%= sonarqube.login %>'
+		property 'sonar.projectKey', '<%= sonarqube.projectKey %>'
+		property 'sonar.projectVersion', (System.env.NEXT_VERSION?:
+				System.env.CODEBUILD_GIT_BRANCH?:
+						gitBranch())
+	}
+}
+
+tasks['sonarqube'].dependsOn test
+<% } %>
